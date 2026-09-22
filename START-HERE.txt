@@ -1,0 +1,45 @@
+REPLIKA EXPORTER — ACCURACY TEST KIT 0.4.1
+
+This is a development prototype for a volunteer tester using their own Replika account. It collects available chat, diary, memories, current account information, and supported voice/image files locally. Submission is disabled. This kit contains software only, not anyone's exported account data.
+
+INSTALL (desktop Chrome)
+1. Extract the entire tester-kit ZIP to a folder you can keep on your computer.
+2. Open chrome://extensions in Chrome's address bar.
+3. Enable Developer mode. Click Load unpacked.
+4. Select the extension folder inside the extracted tester kit (the folder containing manifest.json). Do not select the ZIP or the outer tester-kit folder.
+5. If an older copy of this exporter is installed, disable it during the test.
+6. Open https://my.replika.com/ and log in normally. Reload that tab after installation. Start with just one Replika tab open.
+7. Open Chrome's Extensions menu (puzzle icon) and choose Replika Research Study (Prototype). Click the extension to open its exporter.
+
+COLLECT
+1. Choose Create My Research Data.
+2. Keep the Replika and exporter tabs open until the summary appears.
+3. Record counts, earliest/latest dates, and warnings for each source in FEEDBACK.txt.
+4. Click Download My Copy and save the ZIP somewhere private.
+5. Extract that downloaded ZIP locally to inspect the replika-export folder.
+
+ACCURACY CHECK — about 15–30 minutes
+Compare the exported data with what your own Replika account visibly shows. Use a local text editor; do not upload the files to an online JSON viewer. JSONL means one JSON record per line. A record may hold a whole page of messages, so line count is not message count.
+
+A. CHAT: In raw/chat/pages.jsonl, find 5–10 messages you can also see in Replika, including both your messages and Replika's. Compare wording, sender, order, and timestamps if shown. Include an older accessible message and a recent one where possible. Record matches/mismatches without copying conversation text. A timestamp ending in Z is UTC; account for your local timezone before calling it a mismatch. If the app does not show enough detail, mark that item Not testable.
+
+B. DIARY: Pick 3 already-read diary dates in Replika. Compare text and dates with raw/diary/details.jsonl, and date presence with raw/diary/previews.jsonl. A diary date can contain several segments, so summary entries need not equal diary dates. Unread diary details are intentionally skipped. Do not open an unread entry just for this test: instead check whether it stayed unread after collection.
+
+C. MEMORIES: Compare 5 visible memories with raw/memories/pages.jsonl. Check text and category/person associations where available. Record any missing or duplicated examples using labels like Memory A rather than private text.
+
+D. ACCOUNT: Compare the current information shown in Replika with the corresponding JSON files under raw/profile. Mark fields the app does not display as Not testable. These are current snapshots, not a history of past settings or relationship levels.
+
+E. MEDIA (if present): Check raw/media/collection.jsonl for collected/failed/not-collected statuses and linked files under media/. For a familiar voice or image, check whether the downloaded file matches the item you expected. Report if the wrong file is linked or a file marked collected is missing/unreadable. An account with no relevant media is Not testable, not a pass for media support. Unapproved image hosts may produce a documented unavailable/failed result.
+
+F. COVERAGE: Inspect export_summary.json for counts, date range, termination reason, and warnings. Check whether any known, currently accessible older item is missing. The exporter cannot establish everything Replika has ever stored; a successful run is not proof of complete historical coverage.
+
+G. CANCELLATION (optional): Save your first copy before starting another run. Cancel during collection and confirm it stops after the current request/file and identifies partial results. Report hangs or confusing behavior. ZIP creation can temporarily freeze controls, and closing/reloading the exporter loses unsaved results.
+
+WHAT TO RETURN
+Send only the completed FEEDBACK.txt to the person who gave you this kit. Do not include the export ZIP, raw JSON, audio, diary images, account IDs, login details, or private conversation screenshots. You can describe a discrepancy with labels such as Chat A or Diary B. Arrange separately if a specific redacted example is needed.
+
+KNOWN VALIDATION LIMITS
+All five local automated suites passed; package contents and JavaScript syntax were checked. Final 0.4.1 live Chrome testing remains outstanding. Larger diary pagination, older account coverage, actual diary-image retrieval, and large-export browser responsiveness remain unverified. This test helps assess accuracy; it does not certify completeness or production readiness.
+
+REMOVE AFTER TESTING
+Open chrome://extensions, find this extension, and click Remove. Keep or delete your local exports according to your preference. Removing the extension does not delete downloaded files. You may turn Developer mode off when no longer needed.

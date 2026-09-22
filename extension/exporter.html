@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Replika Research Study</title><link rel="stylesheet" href="style.css"></head><body><main>
+<header><p class="eyebrow">LOCAL STUDY PROTOTYPE · VERSION 0.4.1</p><h1>Prepare your Replika research data</h1>
+<p>This tool collects available chat, diary, memory, and current account information for the study. This build also includes authorized voice audio and diary images when available. Your password and login credentials are not included.</p></header>
+<section class="status"><strong id="connection">Checking Replika…</strong><p id="connection-help"></p></section>
+<section><h2>Create research data</h2><p>Collection happens on this computer. It may take several minutes. You can cancel and keep a partial copy.</p>
+<div class="actions"><button id="create">Create My Research Data</button><button id="cancel" disabled>Cancel</button><button id="open-replika" hidden>Open Replika</button></div>
+<p id="progress" role="status" aria-live="polite"></p><div id="sources" class="sources"></div></section>
+<section id="ready" hidden><h2>Collection summary</h2><p id="ready-message"></p><div id="media-summary"></div>
+<div class="actions"><button id="submit" disabled>Submit My Research Data</button><button id="download">Download My Copy</button></div>
+<p id="submission-help">Submission is not available in this prototype. Your collection stays on this computer.</p>
+<p id="download-status" role="status" aria-live="polite"></p></section>
+<footer>The collection report describes what Replika returned through this route. It does not claim to contain everything Replika has stored. Keep any downloaded copy private.</footer>
+</main><script src="core.js"></script><script src="study-policy.js"></script><script src="media.js"></script><script src="zip.js"></script><script src="exporter.js"></script></body></html>

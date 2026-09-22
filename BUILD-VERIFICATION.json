@@ -1,0 +1,26 @@
+{
+  "version": "0.4.1",
+  "archive": "replika-research-0.4.1.zip",
+  "sha256": "07dc5006d066bbb0d120c367b1374125ce187082a12004e5652500b4c97b2314",
+  "files": {
+    "manifest.json": "0dc44cedef56be49dda47a9741d43097a9fc6c69e004a36fdb246a4b0019feda",
+    "background.js": "0a12affb91fa534e231c6f1dd3efddfc19eb409b4d5614134cc0eb34a2a8d24c",
+    "bridge.js": "c781a021e95ab559c7855086ea298249612c5ad379783eac5d39114d3be54852",
+    "page-agent.js": "b20fed46de811fb95e785c1f4757c64f41fb5ca7347fa049d918e5410e99ca0a",
+    "core.js": "4bc62db00d111f28d9e0d2c4aa3943fe9f3e44acffca2000d8c690309e7ee92f",
+    "study-policy.js": "8e4726aeb8b38a399c3462a9447f66fb461b9b05c6a53bfbb79e64ae3c0ef92d",
+    "exporter.html": "8f1c67a227d19255cd505b769d365cb3c94c55b7c587b7839879fd67b8653452",
+    "exporter.js": "7c644c7e584c44d2781d51253102329c70e0a61406fdaa760f938b77ba6ccbe9",
+    "style.css": "f6ca15fba442d958a86e823bb2ab1bdd79b4755e15547ef1968237cc275e6cd2",
+    "media.js": "c30f460894818798455674825a366ac7360931f1b5e65928d6dfbdd47f68ba05",
+    "zip.js": "fca43a6088c66a3678886f049d692190bb35dd35dd303788dd126b8d1d78bfa6"
+  },
+  "checks": [
+    "five local test suites passed",
+    "packaged JavaScript syntax checked",
+    "runtime dependencies included",
+    "ZIP CRC and exact contents verified"
+  ],
+  "browser_validation": "Deferred by researcher; final 0.4.1 Chrome run remains unverified",
+  "submission": "Disabled; local collection and download only"
+}

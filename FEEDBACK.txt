@@ -1,0 +1,43 @@
+REPLIKA EXPORTER 0.4.1 — TEST FEEDBACK
+Do not include private conversations, account IDs, or login details.
+Use Pass / Mismatch / Not testable for each comparison.
+
+Test date:
+Chrome version:
+Operating system:
+Approximate collection duration:
+Installation or connection problems:
+
+SUMMARY (copy only counts, dates, and non-private warnings)
+Chat count and earliest/latest dates:
+Diary dates and detail segments:
+Memory count:
+Account snapshot source count:
+Voice collected / found:
+Diary images collected / found:
+Warnings / partial results:
+
+COMPARISONS
+Chat: number checked; wording/sender/order/timestamp result:
+Diary: number of already-read dates checked; result:
+Unread diary stayed unread (or Not testable):
+Memories: number checked; text/category result:
+Current account information: fields checked; result:
+Voice files: number checked; linkage/playback result:
+Image files: number checked; linkage/display result:
+Known accessible older items missing (yes/no/not testable):
+Download and ZIP extraction result:
+Cancellation result (if tested):
+Any freeze, error, or unexpected behavior:
+
+DISCREPANCIES
+For each issue, provide:
+- Anonymous label (e.g. Chat A):
+- Expected behavior, without private text:
+- Observed behavior:
+- Export file involved:
+- Steps to reproduce:
+- Does the issue happen again? (optional; do not repeatedly collect if rate-limited)
+
+Overall assessment:
+Any checks you could not complete:

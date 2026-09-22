@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Replika Research Study (Prototype)",
+  "version": "0.4.1",
+  "description": "Local prototype for scanning and exporting data available in your Replika session.",
+  "permissions": ["downloads"],
+  "host_permissions": ["https://my.replika.com/*", "https://d1gjmhogot71z7.cloudfront.net/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Open Replika Research Exporter" },
+  "content_scripts": [
+    { "matches": ["https://my.replika.com/*"], "js": ["core.js", "page-agent.js"], "run_at": "document_start", "world": "MAIN" },
+    { "matches": ["https://my.replika.com/*"], "js": ["bridge.js"], "run_at": "document_start", "world": "ISOLATED" }
+  ]
+}
