@@ -99,8 +99,10 @@ for (const mode of ['inclusive', 'exclusive']) test(`end-to-end export against a
         const frame = JSON.parse(raw);
         if (frame.event_name !== 'history') return;
         requestedLimits.push(frame.payload.limit);
-        const page = historyPage(frame.payload.last_message_id ?? null, Math.min(frame.payload.limit, 100));
-        ws.send(JSON.stringify({ event_name: 'history', token: frame.token, payload: { messages: page } }));
+        const limit = Math.min(frame.payload.limit, 100), page = historyPage(frame.payload.last_message_id ?? null, limit);
+        // Shape follows a real export: oldest-first within a page, plus more/limit/to/days/message_reactions.
+        const more = inclusive ? page.length > 1 || page[0]?.id !== frame.payload.last_message_id : page[0]?.id !== messages[0].id;
+        ws.send(JSON.stringify({ event_name: 'history', token: frame.token, payload: { messages: page, more: page.length ? more : false, limit, days: [], to: page.at(-1)?.meta.timestamp ?? null, message_reactions: [] } }));
       });
     });
 

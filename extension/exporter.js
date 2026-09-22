@@ -134,7 +134,7 @@
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const MEDIA_ERRORS=['rate_limited','media_host_not_allowlisted','unexpected_redirect','unexpected_content_type','file_too_large','media_http_error','empty_file'];
   const TABLES={
-    chat:['sequence','message_id','timestamp','sender','sender_raw','content_type','text','is_voice','media_file','source_ref'],
+    chat:['sequence','message_id','timestamp','sender','sender_raw','content_type','text','original_text','is_voice','is_romantic','uses_memory','uses_advanced_ai','reroll_type','blurred','reactions','media_file','source_ref'],
     diary:['diary_date','segment_index','entry_id','timestamp','title','text','image_count','media_files','source_ref'],
     memories:['endpoint','group','memory_id','text','category','person','timestamp','source_ref']
   };

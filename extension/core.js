@@ -134,8 +134,21 @@
     if (/robot|bot|replika/.test(nature)) return 'replika';
     return nature || null;
   }
+  const flag = v => (typeof v === 'boolean' ? v : null);
+  // Page-level reactions are attached to their message when they name one; the raw page keeps the rest.
+  function reactionsByMessage(pages) {
+    const map = new Map();
+    for (const page of pages || []) for (const r of page?.data?.message_reactions || []) {
+      const id = r?.message_id ?? r?.messageId ?? r?.message?.id;
+      if (id == null) continue;
+      const list = map.get(String(id)) || [];
+      list.push(r?.reaction ?? r?.type ?? r);
+      map.set(String(id), list);
+    }
+    return map;
+  }
   function chatMessages(pages) {
-    const rows = [], seen = new Set();
+    const rows = [], seen = new Set(), reactions = reactionsByMessage(pages);
     for (const page of pages || []) {
       (page?.data?.messages || []).forEach((m, index) => {
         const key = m?.id != null ? `id:${m.id}` : `anon:${JSON.stringify(m)}`;
@@ -147,7 +160,11 @@
           message_id: str(m?.id), timestamp: dateOf(m), sender: senderOf(m), sender_raw: str(m?.meta?.nature ?? null),
           content_type: str(type),
           text: typeof content === 'string' ? content : firstString(content, ['text', 'caption', 'title']),
+          original_text: content?.originalText || null,
           is_voice: m?.meta?.voice_message === true || /voice|audio/i.test(type || ''),
+          is_romantic: flag(m?.is_romantic), uses_memory: flag(m?.uses_memory), uses_advanced_ai: flag(m?.uses_advanced_ai),
+          reroll_type: str(m?.reroll_type ?? null), blurred: flag(m?.blurred),
+          reactions: m?.id != null && reactions.has(String(m.id)) ? reactions.get(String(m.id)) : null,
           source_ref: `raw/chat/pages.jsonl#page=${page.page}/index=${index}`
         });
       });

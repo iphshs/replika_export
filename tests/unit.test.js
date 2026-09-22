@@ -127,3 +127,21 @@ test('generic binary media is accepted only when the bytes match the expected ki
   await assert.rejects(M.retrieve('https://my.replika.com/i', 'voice', async () => fakeResponse(png, 'application/octet-stream')), /unexpected_content_type/);
   await assert.rejects(M.retrieve('https://my.replika.com/i', 'voice', async () => fakeResponse([1, 2, 3], '')), /unexpected_content_type/);
 });
+
+test('chatMessages handles the real Replika history shape', () => {
+  // Field layout observed in a real export (text is synthetic).
+  const msg = (id, nature, ts, extra = {}) => ({ id, content: { type: 'text', text: `t ${id}`, originalText: '' },
+    meta: { bot_id: 'b', chat_id: 'c', client_token: '[REDACTED]', nature, timestamp: ts, voice_message: false, is_manhattan: false,
+      ...(nature === 'Customer' ? { author_id: 'u1', deviceTypeOpt: 'web', unrecognized_voice_message: false } : { customer: 'u1', permitted_actions: ['Upvote'], analytics_info: {} }) },
+    ...extra });
+  const rows = C.chatMessages([{ page: 1, data: { more: true, limit: 30, days: [], to: '2026-01-01T00:00:02.000Z',
+    message_reactions: [{ message_id: 'r1', reaction: 'Love' }],
+    messages: [msg('u1m', 'Customer', '2026-01-01T00:00:01.000Z'), msg('r1', 'Robot', '2026-01-01T00:00:02.000Z', { is_romantic: false, uses_memory: true, reroll_type: 'initial' })] } }]);
+  assert.deepEqual(rows.map(r => r.sender), ['user', 'replika']);
+  assert.equal(rows[0].original_text, null);
+  assert.equal(rows[1].uses_memory, true);
+  assert.equal(rows[1].reroll_type, 'initial');
+  assert.deepEqual(rows[1].reactions, ['Love']);
+  assert.equal(C.isSecretKey('author_id'), false);
+  assert.equal(C.isSecretKey('client_token'), true);
+});
