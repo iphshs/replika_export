@@ -1,15 +1,15 @@
 {
   "version": "0.5.0",
-  "generated_at": "2026-09-22T22:43:11.458Z",
+  "generated_at": "2026-09-22T22:47:41.888Z",
   "files": {
     "background.js": "0a12affb91fa534e231c6f1dd3efddfc19eb409b4d5614134cc0eb34a2a8d24c",
     "bridge.js": "c450db985e59a416ba97c98cf990720027d6f77e11f97991dc4bbb4d52d6f096",
-    "core.js": "5275dd0b2cdd6457836ca2fe0406fbb5945421d18561cdcdc62e82e94574757c",
+    "core.js": "fc48e6a7bf485c2af93e40b9ef235572e03424363d0caa323a95a95b4df3b1e8",
     "exporter.html": "5de154d827c3aca119d10af1f3c8e28679631bfe861ebf581b87f18d7326d822",
-    "exporter.js": "652df7ed1855b3c36fd7e8f81fd0a5752dfb9ddeb5646b31dd33f7e0f6e1d2d5",
+    "exporter.js": "af9041fc928febdb32d96aa955b9ff03a8ff3c1e3dfe1bfea879276ab2e29bb6",
     "manifest.json": "8f18bf0fb84f61c23d8e01a72cbfb4b29c2d23062cf36dc368bd8b53e55d6a3c",
     "media.js": "10265501aa967a4b851fb1a65160b8791ed19a5ca5602dbe926346fd3bf37eb3",
-    "page-agent.js": "ac371316fcce94728e7b093a1144612c7998e35266e0e5c6a0c799fc59c33dc8",
+    "page-agent.js": "2d6ed61a4b536784f133a234e5a7664262f4bdc02f773e1175ba8305347c85b3",
     "study-policy.js": "8e4726aeb8b38a399c3462a9447f66fb461b9b05c6a53bfbb79e64ae3c0ef92d",
     "style.css": "a9cfd1ba46280b538f20d491b8bfbbebe9e9d7f1d005ad77ab08324f687d3e2a",
     "zip.js": "eb9857fe69209a245158ba303968331d888d2897d8b4f07fa18df384bf20d78c"

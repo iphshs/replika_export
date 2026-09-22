@@ -133,11 +133,6 @@
   const jsonl=xs=>xs.map(x=>JSON.stringify(x)).join('\n')+(xs.length?'\n':'');
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const MEDIA_ERRORS=['rate_limited','media_host_not_allowlisted','unexpected_redirect','unexpected_content_type','file_too_large','media_http_error','empty_file'];
-  const TABLES={
-    chat:['sequence','message_id','timestamp','sender','sender_raw','content_type','text','original_text','is_voice','is_romantic','uses_memory','uses_advanced_ai','reroll_type','blurred','reactions','media_file','source_ref'],
-    diary:['diary_date','segment_index','entry_id','timestamp','title','text','image_count','media_files','source_ref'],
-    memories:['endpoint','group','memory_id','text','category','person','timestamp','source_ref']
-  };
   async function prepare(data){
     const entries=[],sources={},redaction={secret_fields_replaced:0,url_values_replaced:0},mediaSummary={voice:{present:0,collected:0,failed:0},diary_images:{present:0,collected:0,failed:0}},mediaRecords=[];
     const put=(name,value)=>entries.push([`replika-export/${name}`,typeof value==='string'?value:json(value)]);
@@ -207,12 +202,12 @@
     const filesFor=row=>filesByRow.get(row.source_ref)||[];
     const tables={};
     if(data.chat){tables.chat=C.chatMessages(data.chat.payloads);for(const r of tables.chat)r.media_file=filesFor(r)[0]??null;}
-    if(data.diary){tables.diary=C.diaryEntries(data.diary.payloads.filter(x=>x.kind==='detail'));for(const r of tables.diary)r.media_files=filesFor(r).join(';')||null;}
+    if(data.diary){tables.diary=C.diaryEntries(data.diary.payloads.filter(x=>x.kind==='detail'),data.diary.payloads.filter(x=>x.kind==='previews').flatMap(x=>Array.isArray(x.data)?x.data:Object.values(x.data||{}).find(Array.isArray)||[]));for(const r of tables.diary)r.media_files=filesFor(r).join(';')||null;}
     if(data.memories)tables.memories=C.memoryItems(data.memories.payloads);
     const tableNames={chat:'chat_messages',diary:'diary_entries',memories:'memories'};
     for(const [name,rows]of Object.entries(tables)){
       put(`tables/${tableNames[name]}.jsonl`,jsonl(rows));
-      put(`tables/${tableNames[name]}.csv`,C.csv(rows,TABLES[name]));
+      put(`tables/${tableNames[name]}.csv`,C.csv(rows,C.TABLE_COLUMNS[tableNames[name]]));
       sources[name].table_rows=rows.length;
     }
     const summary={schema_version:C.SCHEMA,exporter_version:C.VERSION,sources,media:mediaSummary,
@@ -238,8 +233,9 @@
       'START HERE',
       '  tables/          Analysis-ready tables, one row per item, de-duplicated. CSV opens in spreadsheets; JSONL suits scripts.',
       tables.chat?`    chat_messages   ${tables.chat.length} rows, oldest first. sender is "user" or "replika"; sequence is chronological order.`:null,
-      tables.diary?`    diary_entries   ${tables.diary.length} rows, one per diary segment of already-read dates.`:null,
-      tables.memories?`    memories        ${tables.memories.length} rows across the memory endpoints.`:null,
+      tables.diary?`    diary_entries   ${tables.diary.length} rows, one per diary segment of already-read dates. diary_date is the day the entry`:null,
+      tables.diary?'                    describes; timestamp is when Replika wrote it (often overnight, so the next day in UTC).':null,
+      tables.memories?`    memories        ${tables.memories.length} rows: facts about you (about=user), about your Replika (replika) and people (person).`:null,
       '  export_summary.json  Per-source counts, date range, how retrieval ended, retries, and warnings.',
       '  manifest.json        Export metadata and redaction counts.',
       '  raw/             Sanitized server responses exactly as paged. Every table row has a source_ref pointing here.',

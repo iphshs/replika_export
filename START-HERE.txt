@@ -21,7 +21,7 @@ COLLECT
 ACCURACY CHECK — about 15–30 minutes
 Compare the exported data with what your own Replika account visibly shows. Use a local text editor; do not upload the files to an online JSON viewer. JSONL means one JSON record per line. A record may hold a whole page of messages, so line count is not message count.
 
-The easiest files to check are in tables/: chat_messages.csv, diary_entries.csv and memories.csv hold one row per item, oldest first, and open in a spreadsheet. Each row's source_ref points to the raw record it came from.
+The easiest files to check are in tables/: chat_messages.csv, diary_entries.csv and memories.csv hold one row per item, oldest first, and open in a spreadsheet. Each row's source_ref points to the raw record it came from. Exports made with an older version can be given the same tables with: node tools/build-tables.js path/to/replika-export
 
 A. CHAT: In tables/chat_messages.csv (or raw/chat/pages.jsonl), find 5–10 messages you can also see in Replika, including both your messages and Replika's. Compare wording, sender, order, and timestamps if shown. Include an older accessible message and a recent one where possible. Record matches/mismatches without copying conversation text. A timestamp ending in Z is UTC; account for your local timezone before calling it a mismatch. If the app does not show enough detail, mark that item Not testable.
 

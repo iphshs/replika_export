@@ -132,6 +132,14 @@
         const safeUrl=C.allowedMedia(child)?child:null;
         const sourceRef=`${ref}/${key}`;
         if (kind === category && !into.some(x => x.source_ref === sourceRef && x.url === safeUrl)) into.push({ url: safeUrl, source_ref: sourceRef, media_type: kind });
+      } else if (Array.isArray(child) && /images?$/i.test(key) && child.some(x => typeof x === 'string')) {
+        // Diary entries carry an `images` array; accept plain links as well as objects with a url.
+        child.forEach((x, i) => {
+          const sourceRef = `${ref}/${key}/index=${i}`;
+          if (typeof x === 'string' && x && category === 'diary_images' && !into.some(y => y.source_ref === sourceRef))
+            into.push({ url: C.allowedMedia(x) ? x : null, source_ref: sourceRef, media_type: 'diary_images' });
+          else if (x && typeof x === 'object') mediaFrom(x, category, into, key, sourceRef);
+        });
       } else if (child && typeof child === 'object') mediaFrom(child, category, into, key, `${ref}/${key}`);
     }
   }

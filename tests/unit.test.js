@@ -10,9 +10,9 @@ const Z = require('../extension/zip.js');
 const M = require('../extension/media.js');
 
 test('secret keys are matched by segment, not substring', () => {
-  for (const key of ['auth_token', 'x-auth-token', 'authorization', 'sessionId', 'client_token', 'password', 'api_key', 'apiKey', 'x-timestamp-hash', 'headers', 'signed_url', 'Cookie'])
+  for (const key of ['auth_token', 'x-auth-token', 'authorization', 'sessionId', 'session', 'session_token', 'client_token', 'password', 'api_key', 'apiKey', 'x-timestamp-hash', 'headers', 'signed_url', 'Cookie'])
     assert.equal(C.isSecretKey(key), true, key);
-  for (const key of ['author', 'authored_at', 'text', 'timestamp', 'tokenizer_version', 'nature', 'date', 'keyword'])
+  for (const key of ['author', 'authored_at', 'author_id', 'text', 'timestamp', 'tokenizer_version', 'nature', 'date', 'keyword', 'all_day_session_last_updated', 'ar_sessions_count'])
     assert.equal(C.isSecretKey(key), false, key);
 });
 
@@ -70,8 +70,14 @@ test('diaryEntries and memoryItems produce one row per item', () => {
   const d = C.diaryEntries([{ date: '2024-02-01', data: { entries: [{ id: 9, name: 'Title', text: 'Body', image_count: 1 }] } }]);
   assert.equal(d.length, 1);
   assert.equal(d[0].title, 'Title');
-  const m = C.memoryItems([{ kind: 'memory_v3', data: { facts: [{ id: 1, text: 'likes tea', category_id: 'c' }], persons: [{ id: 2, name: 'Sam' }] } }]);
-  assert.deepEqual(m.map(r => [r.group, r.text]), [['facts', 'likes tea'], ['persons', 'Sam']]);
+  const m = C.memoryItems([
+    { kind: 'memory_v3', data: { customer_facts: [{ id: 1, text: 'likes tea', category_id: 'c' }], persons: [{ id: 2, name: 'Sam', relation_id: 'r' }] } },
+    { kind: 'memory_v3_unstructured_fact_categories', data: [{ id: 'c', name: 'Likes' }] },
+    { kind: 'memory_relations', data: [{ id: 'r', name: 'Friend' }] }]);
+  // Lookup endpoints are joined as names, not listed as memories.
+  assert.deepEqual(m.map(r => [r.about, r.text, r.category_name, r.relation_name]), [['user', 'likes tea', 'Likes', null], ['person', 'Sam', null, 'Friend']]);
+  const t = C.diaryEntries([{ date: '2024-02-01', data: { entries: [{ id: 9, text: 'Body', read: true, reaction: 'Upvote' }] } }], [{ date: '2024-02-01', title: 'From preview' }]);
+  assert.deepEqual([t[0].title, t[0].read, t[0].reaction], ['From preview', true, 'Upvote']);
 });
 
 test('csv escapes quotes, commas and newlines', () => {

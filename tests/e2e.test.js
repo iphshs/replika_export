@@ -21,7 +21,7 @@ const TOTAL = 250;
 // Newest message has the highest number. Timestamps one minute apart.
 const messages = Array.from({ length: TOTAL }, (_, i) => ({
   id: `m${String(i).padStart(4, '0')}`,
-  content: i === 7 ? { type: 'voice_message', voice_message_url: VOICE_URL } :
+  content: i === 7 ? { type: 'voice_message', text: 'transcript', duration: 4.2, voice_message_url: VOICE_URL, originalText: '' } :
     { type: 'text', text: i === 3 ? 'see https://example.com/x?sig=abc, then reply 👋' : `message ${i}` },
   meta: { nature: i % 2 ? 'Robot' : 'Customer', timestamp: new Date(Date.UTC(2023, 0, 1, 0, i)).toISOString(), client_token: 'ct', ...(i === 7 ? { voice_message_url: VOICE_URL } : {}) }
 }));
@@ -32,9 +32,9 @@ function historyPage(cursor, limit) {
   return messages.slice(Math.max(0, end - limit), end);
 }
 const previews = [
-  { id: 'd3', date: '2024-03-03', read: true, name: 'Third' },
-  { id: 'd2', date: '2024-03-02', read: true, name: 'Second' },
-  { id: 'd1', date: '2024-03-01', read: false, name: 'Unread' }
+  { diary_entry_id: 'd3', date: '2024-03-03', read: true, title: 'Third', image_count: 1 },
+  { diary_entry_id: 'd2', date: '2024-03-02', read: true, title: 'Second', image_count: 0 },
+  { diary_entry_id: 'd1', date: '2024-03-01', read: false, title: 'Unread', image_count: 0 }
 ];
 let diaryDetailFailures = 1, readUnread = false;
 const api = {
@@ -44,9 +44,13 @@ const api = {
   'personal_bot_chat': () => ({ id: 'c1' }),
   'relationship_statuses': () => [{ id: 'friend' }],
   'core_description': () => ({ text: 'core' }),
-  'memory/v3/': () => ({ facts: [{ id: 'f1', text: 'likes tea', category_id: 'likes', creation_timestamp: '2023-06-01T00:00:00Z' }], persons: [{ id: 'p1', name: 'Sam', relation: 'friend' }] }),
-  'memory/v3/unstructured_fact_categories': () => [{ id: 'likes', name: 'Likes' }],
-  'memory/relations': () => [{ id: 'friend', name: 'Friend' }]
+  // Memory, diary and voice shapes follow a real export.
+  'memory/v3/': () => ({
+    customer_facts: [{ id: 'f1', text: 'likes tea', creation_timestamp: '2023-06-01T00:00:00Z', read: true, is_user_edited: false, category_id: 'likes' }],
+    robot_facts: [{ id: 'f2', text: 'enjoys poems', creation_timestamp: '2023-06-02T00:00:00Z', read: true, is_user_edited: true, category_id: 'likes' }],
+    persons: [{ id: 'p1', name: 'Sam', relation_id: 'friend', creation_timestamp: '2023-06-03T00:00:00Z', read: true, is_user_edited: false, virtual_pet: false }] }),
+  'memory/v3/unstructured_fact_categories': () => [{ id: 'likes', name: 'Likes', is_person_category: false, type: 'x', possible_replacements: [] }],
+  'memory/relations': () => [{ id: 'friend', name: 'Friend', category: 'Friends' }]
 };
 
 const page = `<!doctype html><html><body>
@@ -83,7 +87,7 @@ for (const mode of ['inclusive', 'exclusive']) test(`end-to-end export against a
       if (day) {
         if (day === '2024-03-01') readUnread = true;
         if (day === '2024-03-02' && diaryDetailFailures-- > 0) return route.fulfill({ status: 503, body: '' });
-        const entries = [{ id: `e-${day}`, name: `Entry ${day}`, text: `Body ${day}`, image_count: day === '2024-03-03' ? 1 : 0, ...(day === '2024-03-03' ? { image_url: IMAGE_URL } : {}) }];
+        const entries = [{ id: `e-${day}`, diary_id: `d-${day}`, text: `Body ${day}`, images: day === '2024-03-03' ? [IMAGE_URL] : [], image_count: day === '2024-03-03' ? 1 : 0, timestamp: `${day}T23:00:00Z`, read: true, ...(day === '2024-03-02' ? { reaction: 'Upvote' } : {}) }];
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ date: day, entries }) });
       }
       if (api[key]) return route.fulfill({ contentType: 'application/json', body: JSON.stringify(api[key]()) });
@@ -166,7 +170,11 @@ print(json.dumps({i.filename: z.read(i).decode('latin-1') for i in z.infolist()}
     const diary = read('tables/diary_entries.jsonl').trim().split('\n').map(JSON.parse);
     assert.deepEqual(diary.map(r => r.diary_date), ['2024-03-02', '2024-03-03']);
     assert.equal(diary[1].media_files, 'media/diary-images/0001.png');
-    assert.equal(read('tables/memories.jsonl').trim().split('\n').length, 4);
+    const memories = read('tables/memories.jsonl').trim().split('\n').map(JSON.parse);
+    assert.deepEqual(memories.map(r => [r.about, r.category_name ?? r.relation_name]), [['user', 'Likes'], ['replika', 'Likes'], ['person', 'Friend']]);
+    assert.equal(diary[0].title, 'Second');
+    assert.equal(diary[0].reaction, 'Upvote');
+    assert.equal(chat[7].voice_duration, 4.2);
 
     const profile = JSON.parse(read('raw/profile/profile.json'));
     assert.equal(profile.auth_token, '[REDACTED]');
