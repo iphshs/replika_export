@@ -1,4 +1,4 @@
-REPLIKA EXPORTER 0.4.1 — TEST FEEDBACK
+REPLIKA EXPORTER 0.5.0 — TEST FEEDBACK
 Do not include private conversations, account IDs, or login details.
 Use Pass / Mismatch / Not testable for each comparison.
 
@@ -28,6 +28,7 @@ Image files: number checked; linkage/display result:
 Known accessible older items missing (yes/no/not testable):
 Download and ZIP extraction result:
 Cancellation result (if tested):
+Tables in tables/ match the raw files (spot check):
 Any freeze, error, or unexpected behavior:
 
 DISCREPANCIES

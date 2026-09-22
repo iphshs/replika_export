@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Replika Research Study (Prototype)",
-  "version": "0.4.1",
+  "version": "0.5.0",
+  "minimum_chrome_version": "111",
   "description": "Local prototype for scanning and exporting data available in your Replika session.",
   "permissions": ["downloads"],
   "host_permissions": ["https://my.replika.com/*", "https://d1gjmhogot71z7.cloudfront.net/*"],

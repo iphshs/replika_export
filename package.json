@@ -1,0 +1,11 @@
+{
+  "name": "replika-research-exporter",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Chrome extension that exports a participant's own Replika data locally for research analysis.",
+  "scripts": {
+    "test": "node --test tests/unit.test.js",
+    "test:e2e": "node --test tests/e2e.test.js",
+    "verify": "node tools/build-verification.js"
+  }
+}

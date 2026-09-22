@@ -5,28 +5,38 @@
   else root.ReplikaCore = api;
 })(globalThis, function () {
   'use strict';
-  const VERSION = '0.4.1', SCHEMA = 2;
-  const SECRET = /(?:auth|token|cookie|session|secret|password|credential|api[_-]?key|timestamp[_-]?hash|authorization|headers?|signature|signed[_-]?url)/i;
+  const VERSION = '0.5.0', SCHEMA = 3;
+  // Matched against whole key segments (snake_case, kebab-case and camelCase are split first),
+  // so `author` or `authored_at` are kept while `auth_token`, `x-auth-token` or `sessionId` are not.
+  const SECRET_SEGMENT = /^(?:auth|token|tokens|cookie|cookies|session|secret|secrets|password|passwd|credential|credentials|signature|headers?|apikey)$/;
+  const SECRET_JOINED = /(?:api_?key|timestamp_?hash|authoriz|authenticat|signed_?url|access_?key|private_?key)/;
   const URLISH = /https?:\/\//i;
+  const URL_ANYWHERE = /https?:\/\/[^\s"'<>]*/gi;
   const MEDIA_HOSTS = new Set(['my.replika.com','d1gjmhogot71z7.cloudfront.net']);
+  function isSecretKey(key) {
+    const flat = String(key || '').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+    if (SECRET_JOINED.test(flat.replace(/-/g, '_'))) return true;
+    return flat.split(/[^a-z0-9]+/).some(part => SECRET_SEGMENT.test(part));
+  }
   function allowedMedia(url) {
     try {
       const u = new URL(url);
       return u.protocol === 'https:' && !u.username && !u.password && !u.port && MEDIA_HOSTS.has(u.hostname);
     } catch (_) { return false; }
   }
+  // URLs are replaced where they occur, so surrounding message text survives for analysis.
   function sanitize(value, stats = { secretFields: 0, urls: 0 }) {
     function walk(item) {
       if (Array.isArray(item)) return item.map(walk);
       if (typeof item === 'string') {
-        if (URLISH.test(item)) { stats.urls++; return '[REDACTED_URL]'; }
-        return item;
+        if (!URLISH.test(item)) return item;
+        return item.replace(URL_ANYWHERE, () => { stats.urls++; return '[REDACTED_URL]'; });
       }
       if (!item || typeof item !== 'object') return item;
       const out = {};
       for (const [key, child] of Object.entries(item)) {
-        if (SECRET.test(key)) { out[key] = '[REDACTED]'; stats.secretFields++; }
-        else out[key] = walk(child);
+        const safe = isSecretKey(key) ? (stats.secretFields++, '[REDACTED]') : walk(child);
+        Object.defineProperty(out, key, { value: safe, enumerable: true, writable: true, configurable: true });
       }
       return out;
     }
@@ -35,7 +45,7 @@
   function scanSecrets(value) {
     const result = { secretFields: 0, urlValues: 0 };
     function visit(item, key) {
-      if (SECRET.test(key || '')) {
+      if (isSecretKey(key)) {
         if (item !== '[REDACTED]') result.secretFields++;
         return;
       }
@@ -48,28 +58,36 @@
   }
   function dateOf(record) { return record?.meta?.timestamp ?? record?.timestamp ?? record?.creation_timestamp ?? record?.date ?? null; }
   function validDate(v) { return typeof v === 'string' && !Number.isNaN(Date.parse(v)); }
+  const idOf = record => record?.id ?? record?.diary_entry_id ?? record?.diary_id ?? null;
   function diaryCursor(previews, until) {
     const dates=previews.map(x=>x?.date).filter(x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x)).sort();
     const earliest=dates[0]??null;
     return earliest&&earliest<until?earliest:null;
   }
   function coverage(source) {
-    return { source, records: 0, pages: 0, earliest_retrieved: null, latest_retrieved: null,
+    return { source, records: 0, unique_records: 0, pages: 0, earliest_retrieved: null, latest_retrieved: null,
       retrieval_started_at: new Date().toISOString(), retrieval_completed_at: null,
       termination: 'unavailable', complete_according_to_server_pagination: false,
       duplicate_ids: 0, overlapping_pages: 0, missing_ids: 0, missing_timestamps: 0,
-      errors: [], warnings: [], exporter_version: VERSION, schema_version: SCHEMA };
+      retries: 0, errors: [], warnings: [], exporter_version: VERSION, schema_version: SCHEMA };
   }
+  // Adds a warning once; repeats are counted instead of listed again.
+  function warn(c, message) {
+    c.warning_counts ??= {};
+    c.warning_counts[message] = (c.warning_counts[message] || 0) + 1;
+    if (!c.warnings.includes(message)) c.warnings.push(message);
+  }
+  // Returns the number of records not seen before. Page-boundary overlap (a server that
+  // treats its cursor as inclusive) is counted for transparency but is not an error.
   function addRecords(c, records, seen, previous = new Set()) {
-    let overlap = 0;
+    let overlap = 0, fresh = 0;
     for (const record of records) {
-      const id = record?.id ?? record?.diary_entry_id ?? record?.diary_id ?? null;
-      if (id == null) c.missing_ids++;
+      const id = idOf(record);
+      if (id == null) { c.missing_ids++; fresh++; }
       else {
         const str = String(id);
-        if (seen.has(str)) c.duplicate_ids++;
-        if (previous.has(str)) overlap++;
-        seen.add(str);
+        if (seen.has(str)) { c.duplicate_ids++; if (previous.has(str)) overlap++; }
+        else { fresh++; seen.add(str); }
       }
       const date = dateOf(record);
       if (!validDate(date)) c.missing_timestamps++;
@@ -79,22 +97,114 @@
       }
     }
     c.records += records.length;
+    c.unique_records += fresh;
     if (overlap) c.overlapping_pages++;
-    return new Set(records.map(r => r?.id ?? r?.diary_entry_id ?? r?.diary_id).filter(x => x != null).map(String));
+    return fresh;
   }
+  const pageIds = records => new Set(records.map(idOf).filter(x => x != null).map(String));
   function finish(c, termination) {
     c.termination = termination;
     c.retrieval_completed_at = new Date().toISOString();
-    c.complete_according_to_server_pagination = ['no_next_page','completed','empty'].includes(termination) && !c.errors.length && !c.duplicate_ids && !c.overlapping_pages;
+    c.complete_according_to_server_pagination = ['no_next_page','completed','empty'].includes(termination) && !c.errors.length;
     return c;
   }
   function manifest(selected, sources, redaction, media, policy = null) {
     return { exporter_version: VERSION, schema_version: SCHEMA, exported_at: new Date().toISOString(),
       browser: typeof navigator === 'object' ? 'Chrome extension' : 'synthetic test',
       sources_requested: selected, sources_retrieved: Object.values(sources).filter(x => x.pages > 0).map(x => x.source),
-      warnings: Object.values(sources).flatMap(x => x.warnings.map(w => `${x.source}: ${w}`)),
+      warnings: Object.values(sources).flatMap(x => x.warnings.map(w => {
+        const n = x.warning_counts?.[w] || 1;
+        return `${x.source}: ${w}${n > 1 ? ` (×${n})` : ''}`;
+      })),
       redaction_summary: redaction, media_included: media, collection_policy: policy,
       description: 'Retrieved participant-accessible data; not a claim of complete account history.' };
   }
-  return { VERSION, SCHEMA, allowedMedia, sanitize, scanSecrets, dateOf, diaryCursor, coverage, addRecords, finish, manifest };
+
+  /* Analysis-ready tables. Raw pages stay the source of truth; these are flattened, de-duplicated views. */
+  const str = v => (v == null ? null : typeof v === 'string' ? v : typeof v === 'object' ? JSON.stringify(v) : String(v));
+  const firstString = (obj, keys) => { for (const k of keys) if (typeof obj?.[k] === 'string') return obj[k]; return null; };
+  const byTime = (a, b) => {
+    const x = Date.parse(a.timestamp), y = Date.parse(b.timestamp);
+    if (Number.isNaN(x) || Number.isNaN(y)) return Number.isNaN(x) - Number.isNaN(y);
+    return x - y;
+  };
+  function senderOf(message) {
+    const nature = String(message?.meta?.nature ?? message?.nature ?? message?.sender ?? '').toLowerCase();
+    if (/customer|user|human/.test(nature)) return 'user';
+    if (/robot|bot|replika/.test(nature)) return 'replika';
+    return nature || null;
+  }
+  function chatMessages(pages) {
+    const rows = [], seen = new Set();
+    for (const page of pages || []) {
+      (page?.data?.messages || []).forEach((m, index) => {
+        const key = m?.id != null ? `id:${m.id}` : `anon:${JSON.stringify(m)}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const content = m?.content;
+        const type = (content && typeof content === 'object' ? content.type : null) ?? null;
+        rows.push({
+          message_id: str(m?.id), timestamp: dateOf(m), sender: senderOf(m), sender_raw: str(m?.meta?.nature ?? null),
+          content_type: str(type),
+          text: typeof content === 'string' ? content : firstString(content, ['text', 'caption', 'title']),
+          is_voice: m?.meta?.voice_message === true || /voice|audio/i.test(type || ''),
+          source_ref: `raw/chat/pages.jsonl#page=${page.page}/index=${index}`
+        });
+      });
+    }
+    rows.sort(byTime);
+    rows.forEach((row, i) => { row.sequence = i + 1; });
+    return rows;
+  }
+  function diaryEntries(details) {
+    const rows = [], seen = new Set();
+    for (const detail of details || []) {
+      (detail?.data?.entries || []).forEach((e, index) => {
+        const key = e?.id != null ? `id:${e.id}` : `${detail.date}#${index}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        rows.push({
+          diary_date: detail.date, segment_index: index, entry_id: str(idOf(e)),
+          timestamp: dateOf(e), title: firstString(e, ['name', 'title', 'header']),
+          text: firstString(e, ['text', 'body', 'content', 'description']),
+          image_count: Number.isFinite(e?.image_count) ? e.image_count : null,
+          source_ref: `raw/diary/details.jsonl#date=${detail.date}/index=${index}`
+        });
+      });
+    }
+    return rows.sort((a, b) => a.diary_date.localeCompare(b.diary_date) || a.segment_index - b.segment_index);
+  }
+  function memoryItems(payloads) {
+    const rows = [], seen = new Set();
+    for (const p of payloads || []) {
+      const data = p?.data;
+      const groups = Array.isArray(data) ? [[p.kind, data]] : Object.entries(data || {}).filter(([, v]) => Array.isArray(v));
+      for (const [group, items] of groups) items.forEach((m, index) => {
+        if (!m || typeof m !== 'object') return;
+        const key = `${p.kind}/${group}/${m.id ?? index}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        rows.push({
+          endpoint: p.kind, group, memory_id: str(m.id),
+          text: firstString(m, ['text', 'name', 'description', 'title']),
+          category: str(m.category_id ?? m.category ?? m.type ?? null),
+          person: str(m.person_id ?? m.relation ?? null),
+          timestamp: dateOf(m),
+          source_ref: `raw/memories/pages.jsonl#kind=${p.kind}/${group}/index=${index}`
+        });
+      });
+    }
+    return rows;
+  }
+  function csv(rows, columns) {
+    const cell = v => {
+      if (v == null) return '';
+      const s = typeof v === 'string' ? v : typeof v === 'object' ? JSON.stringify(v) : String(v);
+      return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    // Byte-order mark so spreadsheet tools read UTF-8 (emoji, accents) correctly.
+    return '﻿' + [columns.join(','), ...rows.map(r => columns.map(k => cell(r[k])).join(','))].join('\r\n') + '\r\n';
+  }
+  return { VERSION, SCHEMA, allowedMedia, isSecretKey, sanitize, scanSecrets, dateOf, diaryCursor, coverage, warn,
+    addRecords, pageIds, finish, manifest, chatMessages, diaryEntries, memoryItems, csv };
 });
