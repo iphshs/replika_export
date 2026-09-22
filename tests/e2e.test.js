@@ -39,7 +39,7 @@ const previews = [
 let diaryDetailFailures = 1, readUnread = false;
 const api = {
   'diaries/count': () => ({ count: 3 }),
-  'profile': () => ({ id: 'u1', name: 'Tester', registration_date: '2022-05-01', auth_token: SECRET, author: 'kept' }),
+  'profile': () => ({ id: 'u1', name: 'Tester', registration_date: '2022-05-01', auth_token: SECRET, author: 'kept', birthday_iso: '1990-01-02', email_settings: { email: 'tester@private.example', is_email_verified: true } }),
   'personal_bot': () => ({ id: 'b1', name: 'Rep' }),
   'personal_bot_chat': () => ({ id: 'c1' }),
   'relationship_statuses': () => [{ id: 'friend' }],
@@ -179,6 +179,9 @@ print(json.dumps({i.filename: z.read(i).decode('latin-1') for i in z.infolist()}
     const profile = JSON.parse(read('raw/profile/profile.json'));
     assert.equal(profile.auth_token, '[REDACTED]');
     assert.equal(profile.author, 'kept');
+    assert.equal(profile.birthday_iso, '1990-01-02');
+    assert.deepEqual(profile.email_settings, { email: '[REDACTED]', is_email_verified: true });
+    assert.ok(!all.includes('tester@private.example'), 'email address must not reach the export');
     assert.match(read('README.txt'), /chat_messages +250 rows/);
   } finally { await context.close(); }
 });

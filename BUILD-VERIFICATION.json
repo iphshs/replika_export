@@ -1,12 +1,12 @@
 {
   "version": "0.5.0",
-  "generated_at": "2026-09-22T22:47:41.888Z",
+  "generated_at": "2026-09-22T22:49:47.597Z",
   "files": {
     "background.js": "0a12affb91fa534e231c6f1dd3efddfc19eb409b4d5614134cc0eb34a2a8d24c",
     "bridge.js": "c450db985e59a416ba97c98cf990720027d6f77e11f97991dc4bbb4d52d6f096",
-    "core.js": "fc48e6a7bf485c2af93e40b9ef235572e03424363d0caa323a95a95b4df3b1e8",
+    "core.js": "851cab74c605891462490968208e8c0e0e2cbd9fe83dd88db36caeec348b3388",
     "exporter.html": "5de154d827c3aca119d10af1f3c8e28679631bfe861ebf581b87f18d7326d822",
-    "exporter.js": "af9041fc928febdb32d96aa955b9ff03a8ff3c1e3dfe1bfea879276ab2e29bb6",
+    "exporter.js": "6d7f3c9a70a131bb38f67e9ef32784ba6c594ced1a90bbc35e2b121b692cb533",
     "manifest.json": "8f18bf0fb84f61c23d8e01a72cbfb4b29c2d23062cf36dc368bd8b53e55d6a3c",
     "media.js": "10265501aa967a4b851fb1a65160b8791ed19a5ca5602dbe926346fd3bf37eb3",
     "page-agent.js": "2d6ed61a4b536784f133a234e5a7664262f4bdc02f773e1175ba8305347c85b3",

@@ -242,7 +242,7 @@
       '  media/           Voice audio and diary images; raw/media/collection.jsonl records each file\'s status.',
       '',
       'PRIVACY',
-      '  Login tokens, cookies and similar fields are replaced with [REDACTED]. Web addresses inside any text are',
+      '  Login tokens, cookies, your account email address and similar fields are replaced with [REDACTED]. Web addresses inside any text are',
       '  replaced with [REDACTED_URL]; the rest of the text is kept. Everything else is your own account data: keep it private.',
       '',
       'COMPLETENESS',

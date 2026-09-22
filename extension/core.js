@@ -10,7 +10,9 @@
   // so `author` or `authored_at` are kept while `auth_token`, `x-auth-token` or `sessionId` are not.
   const SECRET_SEGMENT = /^(?:auth|token|tokens|cookie|cookies|secret|secrets|password|passwd|credential|credentials|signature|headers?|apikey)$/;
   // `session` alone is ambiguous: Replika uses it for statistics (all_day_session_last_updated, ar_sessions_count).
-  const SECRET_JOINED = /(?:api_?key|timestamp_?hash|authoriz|authenticat|signed_?url|access_?key|private_?key|^session$|session_?(?:id|key|token|secret)$)/;
+  // Email addresses are personal identifiers, so fields holding one (e.g. profile.email_settings.email)
+  // are removed too; flags such as is_email_verified are kept.
+  const SECRET_JOINED = /(?:api_?key|timestamp_?hash|authoriz|authenticat|signed_?url|access_?key|private_?key|^session$|session_?(?:id|key|token|secret)$|(?:^|_)e_?mail(?:_address)?$)/;
   const URLISH = /https?:\/\//i;
   const URL_ANYWHERE = /https?:\/\/[^\s"'<>]*/gi;
   const MEDIA_HOSTS = new Set(['my.replika.com','d1gjmhogot71z7.cloudfront.net']);

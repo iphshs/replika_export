@@ -151,3 +151,11 @@ test('chatMessages handles the real Replika history shape', () => {
   assert.equal(C.isSecretKey('author_id'), false);
   assert.equal(C.isSecretKey('client_token'), true);
 });
+
+test('email addresses are removed from the profile; birthday and email flags are kept', () => {
+  for (const key of ['email', 'user_email', 'emailAddress', 'contact_email']) assert.equal(C.isSecretKey(key), true, key);
+  for (const key of ['is_email_verified', 'email_settings', 'birthday_iso', 'birthday_status']) assert.equal(C.isSecretKey(key), false, key);
+  const out = C.sanitize({ birthday_iso: '1990-01-02', email_settings: { email: 'a@b.example', is_email_verified: true, status: 'ok' } });
+  assert.deepEqual(out, { birthday_iso: '1990-01-02', email_settings: { email: '[REDACTED]', is_email_verified: true, status: 'ok' } });
+  assert.deepEqual(C.scanSecrets(out), { secretFields: 0, urlValues: 0 });
+});
